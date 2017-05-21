@@ -1,0 +1,8 @@
+straight length = 86
+path width = 6
+loop width 14
+inlet length = 14
+
+
+Tower #1: Cheapest, quickest to build. Single target, can hit both ground and air units. Relatively quick reload.
+Tower #2: Splash damage, can only target ground units. Moderate reload speed. Mortar styled projectile. 
