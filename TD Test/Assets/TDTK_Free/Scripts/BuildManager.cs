@@ -142,9 +142,18 @@ namespace TDTK {
 				mat.mainTextureOffset=new Vector2(0.5f, 0.5f);
 				mat.mainTextureScale=new Vector2(x, z);
 			}
-		}
-		
-		void ClearPlatformColliderRecursively(Transform t){
+
+            // NEW
+            Debug.Log("Building creep path");
+            platformT.gameObject.GetComponent<PlatformTD>().BuildGridPointList();
+            List<GameObject> creepPath = platformT.gameObject.GetComponent<PlatformTD>().GetCreepPath();
+            for (int i = 0; i < creepPath.Count; i++) {
+                Debug.Log("Creep path: x: " + creepPath[i].transform.position.x + " z: " + creepPath[i].transform.position.z);
+            }
+            // END NEW
+        }
+
+        void ClearPlatformColliderRecursively(Transform t){
 			foreach(Transform child in t){
 				ClearPlatformColliderRecursively(child);
 				Collider col=child.gameObject.GetComponent<Collider>();
