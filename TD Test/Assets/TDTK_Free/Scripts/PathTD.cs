@@ -10,91 +10,158 @@ namespace TDTK {
 
 		
 		public List<Transform> wpList=new List<Transform>();
-		
-		public bool createPathLine=true;
+        private List<Transform> wpInnerList = new List<Transform>();
+
+        public bool createPathLine=true;
 		
 		public float dynamicOffset=1;
 		
 		public bool loop=false;
-		public int loopPoint=0;		
-		
-		
-		public void Init(){
+		public int loopPoint=0;
+
+        // NEW
+        bool linePathInited = false;
+        List<GameObject> creepLinePath;
+        List<GameObject> creepLinePoints;
+        GameObject linePathParent;
+        // Added a static instance reference to update the path in buildmanager
+        public static PathTD instance;
+        //
+
+
+        public void Init(){
+            instance = this;
 			
 			if(loop){
+                // Looping not updated with new changes
 				loopPoint=Mathf.Min(wpList.Count-1, loopPoint); //looping must start 1 waypoint before the destination
 			}
 			
 			//~ if(createPathLine) StartCoroutine(CreatePathLine());
 		}
+
+        public void UpdateWaypointList() {
+            wpInnerList.Clear();
+            for (int i = 0; i < wpList.Count; i++) {
+                PlatformTD platformTD = wpList[i].gameObject.GetComponent<PlatformTD>();
+                if (platformTD == null) {
+                    wpInnerList.Add(wpList[i].transform);
+                } else {
+                    // This will blow up if there isn't waypoint prior to and after the platform entry
+                    platformTD.CalculateCreepEntryPoint(wpList[i - 1].position);
+                    platformTD.CalculateCreepExitPoint(wpList[i + 1].position);
+                    List<GameObject> platformWPList = platformTD.GetCreepPath();
+                    for (int j = 0; j < platformWPList.Count; j++) {
+                        wpInnerList.Add(platformWPList[j].transform);
+                    }
+                    // - Give platformTD the waypoint prior to this to figure out the entry point
+                    // - Get the next point after the current to get the exit
+                    // - Add the platform waypoints to the waypoint list
+                }
+            }
+            if (!linePathInited) {
+                InitPath();
+            }
+            UpdatePathLine();
+        }
+
+        public List<Vector3> GetWaypointList() {
+            // Check if platform here
+            List<Vector3> list = new List<Vector3>();            
+            for (int i = 0; i < wpInnerList.Count; i++) {
+                list.Add(wpInnerList[i].position);
+            }
+            if (!linePathInited) {
+                InitPath();
+                UpdateWaypointList();
+            }
+            return list;
+        }
 		
-		public List<Vector3> GetWaypointList(){
-			List<Vector3> list=new List<Vector3>();
-			for(int i=0; i<wpList.Count; i++) list.Add(wpList[i].position);
-			return list;
-		}
-		
-		public int GetPathWPCount(){ return wpList.Count; }
-		public Transform GetSpawnPoint(){ return wpList[0]; }
+		public int GetPathWPCount(){ return wpInnerList.Count; }
+		public Transform GetSpawnPoint(){
+            if (wpInnerList.Count == 0) {
+                UpdateWaypointList();
+            }
+            return wpInnerList[0];
+        }
 		
 		public int GetLoopPoint(){ return loopPoint; }
 		
 		
 		public float GetPathDistance(int wpID=1){
-			if(wpList.Count==0) return 0;
+			if(wpInnerList.Count==0) return 0;
 			
 			float totalDistance=0;
 			
-			for(int i=wpID; i<wpList.Count; i++)
-				totalDistance+=Vector3.Distance(wpList[i-1].position, wpList[i].position);
+			for(int i=wpID; i< wpInnerList.Count; i++)
+				totalDistance+=Vector3.Distance(wpInnerList[i-1].position, wpInnerList[i].position);
 			
 			return totalDistance;
 		}
 		
-		
-		
-		
-		
 		void Start(){
-			if(createPathLine) CreatePathLine();
-		}
-		void CreatePathLine(){
-			
-			Transform parentT=new GameObject().transform;
-			parentT.position=transform.position;
-			parentT.parent=transform;
-			parentT.gameObject.name="PathLine";
-			
-			GameObject pathLine=(GameObject)Resources.Load("ScenePrefab/PathLine");
-			GameObject pathPoint=(GameObject)Resources.Load("ScenePrefab/PathPoint");
-			
-			Vector3 startPoint=Vector3.zero;
-			Vector3 endPoint=Vector3.zero;
-			
-			for(int i=0; i<wpList.Count; i++){
-				GameObject point=(GameObject)Instantiate(pathPoint, wpList[i].position, Quaternion.identity);
-				point.transform.parent=parentT;
-				
-				endPoint=wpList[i].position;
-				
-				if(i>0){
-					GameObject lineObj=(GameObject)Instantiate(pathLine, startPoint, Quaternion.identity);
-					LineRenderer lineRen=lineObj.GetComponent<LineRenderer>();
-					lineRen.SetPosition(0, startPoint);
-					lineRen.SetPosition(1, endPoint);
-					
-					lineObj.transform.parent=parentT;
-				}
-				
-				startPoint=wpList[i].position;
-			}
-		}
-		
-		
-		
-		
-		
-		public bool showGizmo=true;
+
+            // NEW
+            if (createPathLine) {
+                if (!linePathInited) {
+                    InitPath();
+                }
+                UpdatePathLine();
+            }
+            //
+        }
+
+        // NEW
+        private void InitPath() {
+            linePathInited = true;
+            creepLinePath = new List<GameObject>();
+            creepLinePoints = new List<GameObject>();
+            linePathParent = new GameObject();
+            linePathParent.transform.position = transform.position;
+            linePathParent.transform.parent = transform;
+            linePathParent.name = "PathLine";
+        }
+        
+
+        private void UpdatePathLine() {
+            for (int i=0; i < creepLinePath.Count; i++ ) {
+                Destroy(creepLinePath[i]);
+            }
+            creepLinePath.Clear();
+            for (int i = 0; i < creepLinePoints.Count; i++) {
+                Destroy(creepLinePoints[i]);
+            }
+            creepLinePoints.Clear();
+
+            GameObject pathLine = (GameObject)Resources.Load("ScenePrefab/PathLine");
+            GameObject pathPoint = (GameObject)Resources.Load("ScenePrefab/PathPoint");
+
+            Vector3 startPoint = Vector3.zero;
+            Vector3 endPoint = Vector3.zero;
+
+            for (int i=0; i < wpInnerList.Count; i++) {
+                GameObject point = (GameObject)Instantiate(pathPoint, wpInnerList[i].position, Quaternion.identity);
+                point.transform.parent = linePathParent.transform;
+                creepLinePoints.Add(point);
+
+                endPoint = wpInnerList[i].position;
+
+                if(i>0) {
+                    GameObject lineObj = (GameObject)Instantiate(pathLine, startPoint, Quaternion.identity);
+                    creepLinePath.Add(lineObj);
+                    LineRenderer lineRen = lineObj.GetComponent<LineRenderer>();
+                    lineRen.SetPosition(0, startPoint);
+                    lineRen.SetPosition(1, endPoint);
+
+                    lineObj.transform.parent = linePathParent.transform;
+                }
+
+                startPoint = wpInnerList[i].position;
+            }
+        }
+
+        public bool showGizmo=true;
 		public Color gizmoColor=Color.blue;
 		void OnDrawGizmos(){
 			if(showGizmo){
@@ -114,9 +181,9 @@ namespace TDTK {
 					//~ }
 				//~ }
 				//~ else{
-					for(int i=1; i<wpList.Count; i++){
-						if(wpList[i-1]!=null && wpList[i]!=null)
-							Gizmos.DrawLine(wpList[i-1].position, wpList[i].position);
+					for(int i=1; i< wpInnerList.Count; i++){
+						if(wpInnerList[i-1]!=null && wpInnerList[i]!=null)
+							Gizmos.DrawLine(wpInnerList[i-1].position, wpInnerList[i].position);
 					}
 				//~ }
 			}

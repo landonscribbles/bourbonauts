@@ -30,8 +30,10 @@ namespace TDTK {
 		
 		
 		public bool autoSearchForPlatform=false;
-		
-		
+
+        // NEW
+        public GameObject PathGameObject;
+        //
 		
 		
 		
@@ -52,6 +54,7 @@ namespace TDTK {
 			
 			InitTower();
 			InitPlatform();
+
 		}
 		
 		public GameObject indicatorBuildPoint;
@@ -142,9 +145,10 @@ namespace TDTK {
 				mat.mainTextureOffset=new Vector2(0.5f, 0.5f);
 				mat.mainTextureScale=new Vector2(x, z);
 			}
-		}
-		
-		void ClearPlatformColliderRecursively(Transform t){
+
+        }
+
+        void ClearPlatformColliderRecursively(Transform t){
 			foreach(Transform child in t){
 				ClearPlatformColliderRecursively(child);
 				Collider col=child.gameObject.GetComponent<Collider>();
@@ -153,8 +157,7 @@ namespace TDTK {
 				}
 			}
 		}
-		
-		
+
 		public static void AddNewTower(UnitTower newTower){
 			if(instance.towerList.Contains(newTower)) return;
 			instance.towerList.Add(newTower);
@@ -162,19 +165,7 @@ namespace TDTK {
 			if(onAddNewTowerE!=null) onAddNewTowerE(newTower);
 		}
 		
-		
-		
-		
-		
-		
-		// Update is called once per frame
-		void Update () {
-			
-		}
-		
-		
 		static public void ClearBuildPoint(){
-			//Debug.Log("ClearBuildPoint");
 			buildInfo=null;
 			ClearIndicator();
 		}
@@ -251,7 +242,6 @@ namespace TDTK {
 							//calculating the build center point base on the input position
 							Vector3 pos=GetTilePos(buildPlatforms[i].thisT, hit.point);
 							
-							//Debug.Log(new Vector3(remainderX, 0, remainderZ)+"  "+new Vector3(signX, 0, signZ)+"  "+p+"  "+basePlane.position);
 							indicatorCursor.transform.position=pos;
 							indicatorCursor.transform.rotation=buildPlatforms[i].thisT.rotation;
 							
@@ -428,6 +418,8 @@ namespace TDTK {
 				
 				//clear the build info and indicator for build manager
 				ClearBuildPoint();
+
+                PathTD.instance.UpdateWaypointList();
 				
 				return "";
 			}
