@@ -21,6 +21,7 @@ namespace TDTK {
 		private int waypointID=1;
 		
 		
+        // CONVERT TO GETTING NEW PATH
 		
 		// Use this for initialization
 		void Start () {
@@ -49,10 +50,21 @@ namespace TDTK {
 			StartCoroutine(EmitRoutine());
 			
 			while(true){
-				//move to next point, return true if reach
-				if(MoveToPoint(indicatorT, waypointList[waypointID])){
+                //move to next point, return true if reach
+                
+                // Kludge for cases that will take time to track down
+                if (waypointList.Count == 0) {
+                    path.UpdateWaypointList();
+                    waypointList = path.GetWaypointList();
+                }
+                if (waypointID >= waypointList.Count) {
+                    waypointID = waypointList.Count - 1;
+                }
+                //
+                if (MoveToPoint(indicatorT, waypointList[waypointID])){
 					waypointID+=1;
 					if(waypointID>=path.GetPathWPCount()){	//if reach path destination, reset to starting pos
+                        Debug.Log("Reset path indicator");
 						Reset();
 					}
 				}

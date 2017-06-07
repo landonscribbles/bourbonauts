@@ -52,8 +52,12 @@ namespace TDTK {
 		public override void Start() {
 			base.Start();
 		}
-		
-		public void InitTower(int ID){
+
+        void OnDestroy() {
+            PathTD.instance.UpdateWaypointList(); 
+        }
+
+        public void InitTower(int ID){
 			Init();
 			
 			instanceID=ID;
