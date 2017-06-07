@@ -26,8 +26,13 @@ namespace TDTK {
 		//private Vector3 flightHeightOffset;
 		private Vector3 pathDynamicOffset;
 		public Vector3 GetPathDynamicOffset(){ return pathDynamicOffset; }
-		
-		public override void Awake() {
+
+        // NEW
+        Vector3 nullPoint = new Vector3(-10000, -10000, -10000);
+        Vector3 nextDestination;
+        //
+
+        public override void Awake() {
 			SetSubClass(this);
 			
 			base.Awake();
@@ -37,6 +42,9 @@ namespace TDTK {
 			if(thisObj.GetComponent<Collider>()==null){
 				thisObj.AddComponent<SphereCollider>();
 			}
+            // NEW
+            nextDestination = nullPoint;
+            //
 		}
 		
 		public override void Start() {
@@ -80,20 +88,59 @@ namespace TDTK {
 		public PathTD path;
 		public List<Vector3> waypointList=new List<Vector3>();
 		public int waypointID=1;
+
+
 		
 		
 		public override void FixedUpdate(){
 			base.FixedUpdate();
 			
 			if(!stunned && !dead){
-				if(MoveToPoint(waypointList[waypointID])){
-					waypointID+=1;
-					if(waypointID>=path.GetPathWPCount()){
-						ReachDestination();
-					}
-				}
+                // NEW
+                waypointList = path.GetWaypointList();
+                if (nextDestination == nullPoint) {
+                    nextDestination = waypointList[waypointID];
+                }
+                if (!NextWaypointInWaypointList(nextDestination)) {
+                    KeyValuePair<Vector3, int> waypointAndIdx = FindClosestWaypoint();
+                    nextDestination = waypointAndIdx.Key;
+                    waypointID = waypointAndIdx.Value;
+                }
+                if (MoveToPoint(nextDestination)) {
+                    Debug.Log("waypointID: " + waypointID);
+                    Debug.Log("waypointList Count: " + waypointList.Count);
+                    waypointID += 1;
+                    if (waypointID >= waypointList.Count) {
+                        ReachDestination();
+                    } else {
+                        nextDestination = waypointList[waypointID];
+                    }
+                }
+                //
 			}
 		}
+
+        private bool NextWaypointInWaypointList(Vector3 nextWaypoint) {
+            for (int i=0; i<waypointList.Count; i++) {
+                if (nextWaypoint == waypointList[i]) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private KeyValuePair<Vector3, int> FindClosestWaypoint() {
+            KeyValuePair<Vector3, int> waypointAndIndex = new KeyValuePair<Vector3, int>(waypointList[0], 0);
+            float closestWaypointDistance = Vector3.Distance(transform.position, waypointAndIndex.Key);
+            for (int i=1; i< waypointList.Count; i++) {
+                float waypointDistance = Vector3.Distance(transform.position, waypointList[i]);
+                if (waypointDistance < closestWaypointDistance) {
+                    closestWaypointDistance = waypointDistance;
+                    waypointAndIndex = new KeyValuePair<Vector3, int>(waypointList[i], i);
+                }
+            }
+            return waypointAndIndex;
+        }
 		
 		//function call to rotate and move toward a pecific point, return true when the point is reached
 		public bool MoveToPoint(Vector3 point){
