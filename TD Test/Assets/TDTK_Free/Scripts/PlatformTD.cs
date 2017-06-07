@@ -128,7 +128,6 @@ namespace TDTK {
             if (gridPositions.Count > 0) {
                 return;
             }
-            Debug.Log("Building grid point list");
             // For pathing build this out as a 2D list with 0 index of the list being the bottom corner
             // then for pathfinding it's a matter of checking to see if there is a list: prior to, after
             // and then within it's own list prior to and after the current index (position is "X", checked is "c"):

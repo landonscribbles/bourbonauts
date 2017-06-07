@@ -79,7 +79,12 @@ namespace TDTK {
         }
 		
 		public int GetPathWPCount(){ return wpInnerList.Count; }
-		public Transform GetSpawnPoint(){ return wpInnerList[0]; }
+		public Transform GetSpawnPoint(){
+            if (wpInnerList.Count == 0) {
+                UpdateWaypointList();
+            }
+            return wpInnerList[0];
+        }
 		
 		public int GetLoopPoint(){ return loopPoint; }
 		
