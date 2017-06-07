@@ -107,8 +107,6 @@ namespace TDTK {
                     waypointID = waypointAndIdx.Value;
                 }
                 if (MoveToPoint(nextDestination)) {
-                    Debug.Log("waypointID: " + waypointID);
-                    Debug.Log("waypointList Count: " + waypointList.Count);
                     waypointID += 1;
                     if (waypointID >= waypointList.Count) {
                         ReachDestination();
