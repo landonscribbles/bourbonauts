@@ -1,4 +1,4 @@
 sceneSetups:
-- path: Assets/burb mockup 1 node.unity
+- path: Assets/TitleScreen.unity
   isLoaded: 1
   isActive: 1

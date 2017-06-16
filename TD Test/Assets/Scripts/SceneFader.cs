@@ -62,7 +62,7 @@ public class SceneFader : MonoBehaviour {
 
 	#region Ryan's crappy code
 	public void FadeOut(){
-		fadeSpeed = 5.0f;
+		fadeSpeed = 4.0f;
 		 
 		StartCoroutine(GameObject.FindObjectOfType<SceneFader>().FadeAndLoadScene(SceneFader.FadeDirection.In, "burb mockup 1 node"));
 	}
